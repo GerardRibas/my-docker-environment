@@ -1,0 +1,63 @@
+version: '3.2'
+services:
+  netatalk:
+    image: cptactionhank/netatalk
+    container_name: netatalk
+    hostname: netatalk
+    network_mode: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./netatalk/afp.conf:/etc/afp.conf:ro
+      - /media/data/timemachine:/timemachine
+      - /media/downloads:/downloads
+      - /media/data/gerard:/data
+    env_file:
+      - .env/netatalk
+    environment:
+      - AFP_UID=1000
+      - AFP_GID=1000
+    restart: always
+  ddclient:
+    image: smdion/docker-ddclient
+    container_name: ddclient
+    hostname: ddclient
+    network_mode: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./ddclient/ddclient.conf:/config/ddclient.conf:ro
+    restart: always
+  nginx:
+    image: jwilder/nginx-proxy
+    container_name: nginx
+    hostname: nginx
+    networks:
+      development:
+      media-center:
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /media/data/docker/nginx/certs:/etc/nginx/certs
+    restart: always
+  vpn:
+    image: kylemanna/openvpn
+    container_name: vpn
+    hostname: vpn
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 1194:1194/udp
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - vpn-config:/etc/openvpn
+    restart: always
+networks:
+  development:
+      external:
+        name: development_default
+  media-center:
+    external:
+      name: mediacenter_default
+volumes:
+  vpn-config:

@@ -1,0 +1,10 @@
+.idea
+*.iml
+**/.env/netatalk
+**/.env/gitlab
+**/.env/postgres
+**/.env/sonar
+**/.env/transmission
+ddclient.conf
+afp.conf
+init.sql

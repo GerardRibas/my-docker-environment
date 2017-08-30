@@ -1,0 +1,92 @@
+version: '3.2'
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    hostname: postgres
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    env_file:
+      - .env/postgres
+  redis:
+    image: sameersbn/redis
+    container_name: redis
+    hostname: redis
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - redis-data:/var/lib/redis
+  gitlab:
+    image: sameersbn/gitlab
+    container_name: gitlab
+    hostname: gitlab
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - gitlab-data:/home/git/data
+      - /media/data/docker/gitlab/backups:/home/git/backups
+    env_file:
+      - .env/gitlab
+    environment:
+      - VIRTUAL_HOST=git.gerardribas.me
+      - DB_ADAPTER=postgresql
+      - DB_NAME=gitlabhq_production
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - GITLAB_EMAIL=gitlab@gerardribas.me
+      - SMTP_HOST=smtp.sendgrid.net
+      - GITLAB_PORT=443
+      - GITLAB_HTTPS=true
+      - SSL_SELF_SIGNED=true
+      - GITLAB_SSH_PORT=10022
+      - GITLAB_BACKUP_DIR=/home/git/backups
+      - GITLAB_BACKUPS=daily
+      - GITLAB_BACKUP_EXPIRY=1209600
+    ports:
+      - "10022:22"
+  jenkins:
+    image: jenkins
+    container_name: jenkins
+    hostname: jenkins
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - jenkins-data:/var/jenkins_home
+    environment:
+      - VIRTUAL_HOST=jenkins.gerardribas.me
+      - VIRTUAL_PORT=8080
+  sonar:
+    image: sonarqube
+    container_name: sonar
+    hostname: sonar
+    depends_on:
+      - postgres
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-ext:/opt/sonarqube/extensions
+    env_file:
+      - .env/sonar
+    environment:
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://postgres/sonar
+      - VIRTUAL_HOST=sonar.gerardribas.me
+  nexus:
+    image: sonatype/nexus3
+    container_name: nexus
+    hostname: nexus
+    volumes:
+      - nexus3-data:/nexus-data
+    environment:
+      - NEXUS_CONTEXT=nexus
+      - VIRTUAL_HOST=nexus.gerardribas.me
+volumes:
+  postgres-data:
+  redis-data:
+  gitlab-data:
+  jenkins-data:
+  sonarqube-data:
+  sonarqube-ext:
+  nexus3-data:

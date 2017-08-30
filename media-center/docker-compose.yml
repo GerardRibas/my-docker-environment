@@ -1,0 +1,79 @@
+version: '3.2'
+services:
+  jackett:
+    image: linuxserver/jackett
+    container_name: jackett
+    hostname: jackett
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /media/downloads/torrents/complete:/downloads
+      - jackett-data:/config
+    environment:
+      - VIRTUAL_HOST=jackett.internal
+      - VIRTUAL_PORT=9117
+      - PGID=10000
+      - PUID=10000
+    restart: always
+  sonarr:
+    image: linuxserver/sonarr
+    container_name: sonarr
+    hostname: sonarr
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /media/downloads/torrents/complete/tv:/downloads
+      - /media/downloads/library/tv:/tv
+      - sonarr-data:/config
+    environment:
+      - VIRTUAL_HOST=sonarr.internal
+      - VIRTUAL_PORT=8989
+      - PGID=10000
+      - PUID=10000
+    restart: always
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    hostname: radarr
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /media/downloads/torrents/complete/movies:/downloads
+      - /media/downloads/library/movies:/movies
+      - radarr-data:/config
+    environment:
+      - VIRTUAL_HOST=radarr.internal
+      - VIRTUAL_PORT=7878
+      - PGID=10000
+      - PUID=10000
+    restart: always
+  transmission:
+    image: haugene/transmission-openvpn
+    container_name: transmission
+    hostname: transmission
+    cap_add:
+      - NET_ADMIN
+    devices:
+        - /dev/net/tun
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /media/downloads/torrents:/data
+      - /media/data/CursosDeDesarrollo:/media/data/CursosDeDesarrollo
+    ports:
+      - 9091:9091
+    env_file:
+      - .env/transmission
+    environment:
+      - VIRTUAL_HOST=transmission.internal
+      - VIRTUAL_PORT=9091
+      - PGID=10000
+      - PUID=10000
+      - OPENVPN_PROVIDER=NORDVPN
+      - OPENVPN_CONFIG=es11.nordvpn.com.udp1194
+      - TRANSMISSION_DOWNLOAD_DIR="/data/complete"
+      - TRANSMISSION_RPC_AUTHENTICATION_REQUIRED="true"
+      - TRANSMISSION_SPEED_LIMIT_UP_ENABLED="true"
+      - TRANSMISSION_SPEED_LIMIT_UP="300"
+      - OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60
+    restart: always
+volumes:
+  jackett-data:
+  sonarr-data:
+  radarr-data:
